@@ -1,0 +1,266 @@
+body {
+    overflow-y: hidden !important;
+    overflow-x: hidden !important;
+}
+.navbar-brand{
+    font-size: 12px;
+}
+
+/*Viz*/
+
+.brush .extent {
+    stroke: #fff;
+    fill-opacity: .125;
+    shape-rendering: crispEdges;
+}
+
+#vis {
+    height: 45vh; /* Revisar en controler también */
+    width: 100%;
+}
+
+#vis svg {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+svg .active {
+    opacity: 1 !important;
+}
+
+.selected {
+    stroke-width: 3;
+    stroke-opacity: 1;
+    stroke: #696969;
+}
+
+circle.selected, circle.active {
+    r: 15px;
+}
+
+rect.selected, rect.active {
+    width: 20px;
+    height: 20px;
+
+}
+
+/*Menú*/
+
+.form-group label {
+    float: left;
+    text-align: left;
+    font-weight: normal;
+}
+
+.form-group select {
+    display: inline-block;
+    width: auto;
+    vertical-align: middle;
+    margin: 2px;
+}
+
+select {
+    width: 100% !important;
+}
+
+/*HORIZONTAL PANELS*/
+
+.list-group-horizontal {
+    white-space: nowrap;
+    overflow-x: scroll;
+}
+
+.list-group-horizontal .list-group-item {
+    display: inline-block;
+    margin-bottom: 0;
+    margin-right: 0;
+    border-right-width: 0;
+    width: 20vw;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.list-group-horizontal .list-group-item:first-child {
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 4px;
+    margin-left: 0px;
+}
+
+.list-group-horizontal .list-group-item:last-child {
+    border-top-right-radius: 4px;
+    border-bottom-left-radius: 0;
+    border-right-width: 1px;
+}
+
+/* PANEL ITEMS */
+
+.non-relevant-article, #non-relevant {
+    background-color: rgba(121, 53, 0, 0.2) !important;
+}
+
+.relevant-article, #relevant {
+    background-color: rgba(27, 147, 119, 0.2) !important;
+}
+
+.unknown, #next-articles {
+    background-color: rgba(117, 112, 179, 0.2) !important;
+}
+
+.list-group-item {
+    border-width: medium;
+    z-index: 2;
+    color: #555555;
+}
+
+/* hover or focus en normal*/
+
+.relevant-article:hover,
+.relevant-article:focus {
+    background-color: rgba(27, 147, 119, 0.5) !important;
+}
+
+.non-relevant-article:hover,
+.non-relevant-article:focus {
+    background-color: rgba(121, 53, 0, 0.5) !important;
+}
+
+.unknown:hover,
+.unknown:focus {
+    background-color: rgba(117, 112, 179, 0.5) !important;
+}
+
+/*active*/
+.list-group-item.active,
+.list-group-item.active:hover,
+.list-group-item.active:focus {
+    z-index: 2;
+    color: #FFFFFF;
+    border-color: white;
+}
+
+.relevant-article.active,
+.relevant-article.active:hover,
+.relevant-article.active:focus {
+    background-color: rgba(27, 147, 119, 0.8) !important;
+}
+
+.non-relevant-article.active,
+.non-relevant-article.active:hover,
+.non-relevant-article.active:focus {
+    background-color: rgba(217, 95, 2, 0.8) !important;
+}
+
+.unknown.active,
+.unknown.active:hover,
+.unknown.active:focus {
+    background-color: rgba(117, 112, 179, 0.8) !important;
+}
+
+/*Bagde Item-list*/
+.badge:empty {
+    display: inline;
+}
+
+.list-group-item .badge:before {
+    content: attr(data-abbr-type);
+}
+
+.list-group-item .badge,
+.list-group-item.active .badge,
+.list-group-item:hover .badge {
+    color: inherit;
+    background-color: inherit;
+    float: none;
+}
+
+#next-articles, #history-articles {
+    max-height: 8vh;
+    min-height: 6vh;
+    overflow-y: hidden;
+    overflow-x: scroll;
+}
+
+#relevant, #non-relevant {
+    display: block;
+    min-height: 73vh;
+    max-width: inherit;
+    min-width: 20vw;
+    max-height: 73vh;
+    overflow-y: scroll
+}
+
+/*TIMELINE*/
+
+#history-articles {
+    max-width: 100%;
+    z-index: 99;
+    position: absolute;
+    bottom: 10px;
+    left: 15px;
+    overflow: auto;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 1);
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.5s linear, visibility 0s, opacity 0.5s linear;
+}
+
+#see-timeline {
+    z-index: 100;
+    position: absolute;
+    bottom: 10px;
+    left: 15px;
+}
+
+/*LOADING GIF*/
+
+.loading {
+    height: 30px;
+    width: auto;
+    display: none;
+}
+
+#loading-survey.loading {
+    height: 100px;
+}
+
+/*SURVEY*/
+iframe {
+    width: 100%;
+    height: 80vh;
+
+}
+
+/*Details*/
+
+#selected_article_info {
+    max-height: 30vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+#selected_articles_revisions_intro, #selected_articles_revisions {
+    display: none;
+}
+
+#selected_article_info h5 {
+    font-weight: bolder;
+}
+
+ul.revisions {
+    margin: 0;
+    padding: 0;
+}
+
+.revisions.hide-content {
+    max-height: 1.4em;
+    overflow: hidden;
+    transition: max-height 0.15s ease-out;
+}
+
+.revisions.show-content {
+    max-height: 100%;
+    transition: max-height 0.15s ease-out;
+}
+
+

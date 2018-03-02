@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8">
+    <title>EpisteAid</title>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+    <script src="//d3js.org/d3.v3.min.js"></script>
+    <script src={{ url_for('static', filename='variables.js' ) }}></script>
+    <script src={{ url_for('static', filename='utils.js' ) }}></script>
+    <script src={{ url_for('static', filename='colorbrewer.js' ) }}></script>
+
+    <script src={{ url_for('static', filename='bootstrap.js' ) }}></script>
+    <link href={{ url_for('static', filename="bootstrap.css" ) }} rel="stylesheet">
+    <script src={{ url_for('static', filename='dragula.js' ) }}></script>
+    <link href={{ url_for('static', filename="dragula.css" ) }} rel="stylesheet">
+    <script src={{ url_for('static', filename='intro.js' ) }}></script>
+    <link href={{ url_for('static', filename="introjs.css" ) }} rel="stylesheet">
+    <script src={{ url_for('static', filename='counter.js' ) }}></script>
+
+</head>
+
+<body>
+
+
+<nav class="navbar navbar-default navbar-static-top">
+    <div class="container-fluid">
+        <div class="col-md-12">
+            <div class="navbar-header"
+                 data-intro="Este es el título de la búsqueda que estás realizando. Si el con el título no te queda claro lo que estás buscando, puedes revisar el documento de la caja verde aquí abajo."
+                 data-hint="Título de la búsqueda"
+                 data-position="bottom" data-step="1">
+                <a class="navbar-brand" href="#"
+                   id="document-title">{{ document_set_title }}</a>
+            </div>
+
+            <div class="collapse navbar-collapse">
+
+                <button class="btn btn-default disabled navbar-btn"
+                        id="send-feedback" type="button"
+                        onclick="searchMore()"
+                        data-hint="Se habilitará este botón cada vez que hayas entregado feedback sobre 5 documentos."
+                        data-intro="Para buscar más documentos, debes hacer click aquí. Solo podrás hacerlo cuando hayas entregado información de al menos 5 documentos. Los nuevos documentos se mostrarán en la caja morada."
+                        data-step="11"
+                        data-position="bottom"><span class="badge label-default" data-placement='bottom'
+                     data-title="Cuántos documentos te faltan por clasificar antes de poder buscar más" data-trigger="hover" data-container="body"
+                data-toggle="tooltip" >5</span> Buscar más documentos
+                </button>
+                <span><img src="static/spiner.gif" id='loading-search'
+                           class="loading"></span>
+
+                <div class="navbar-right">
+                    <span id='counter' class="label label-default" data-step="12" data-position="bottom" data-intro="Aquí se mostrará cuanto rato queda para terminar la actividad. El counter se detiene cada vez que realizas este tour y cuando pausas la sesión.">:</span>
+
+                    <button class="btn btn-default navbar-btn disabled"
+                            id="finish-experiment" type="button"
+                            data-target="#finish-experiment-modal"
+                            data-hint="Cuando hayas encontrado los documentos relevantes haz click aquí para terminar, el sistema te mostrará un cuestionario que tendrás que responder. Este botón se activa cuando hayan pasado 15 minutos desde el inicio de la búsqueda."
+                            data-position="bottom"
+                            data-step="13"
+                            data-intro="Cuando creas que has encontrado todos los documentos relevantes puedes terminar la búsqueda. Tendrás que responder un cuestionario pequeño para terminar. Este botón se activa cuando hayan pasado 15 minutos desde el inicio de la búsqueda.">
+                        Terminar la búsqueda
+                    </button>
+                    <button class="btn btn-default navbar-btn"
+                            id="finish-session" type="button"
+                            data-toggle="modal"
+                            data-target="#finish-session-modal"
+                            data-hint="Si deseas dejar de trabajar en esta búsqueda para continuar más tarde haz click aquí."
+                            data-intro="Si deseas dejar de trabajar en esta búsqueda para continuar más tarde haz click aquí."
+                            data-step="14"
+                            data-position="bottom"
+                    >Guardar y continuar más tarde
+                    </button>
+                    <button class="btn btn-warning navbar-btn"
+                            onclick="toggleHelp(this)"
+                            data-intro="Si quieres ver una descripción para cada elemento de la interfaz, haz click aquí."
+                            data-position="left" data-step="15"
+                            id="help">Ver ayuda
+                    </button>
+                    <button class="btn btn-warning navbar-btn"
+                            onclick="startFeatureTour()"
+                            data-hint="Haz click aquí para hacer el tour de la interfaz de nuevo"
+                            data-intro="Si quieres repetir este tour, haz click aquí."
+                            data-position="left" data-step="16">Tour del
+                        programa
+                    </button>
+                </div>
+            </div>
+
+        </div><!-- /.container-fluid -->
+    </div>
+</nav>
+
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="col-md-12">
+            <div id="next-articles" class="list-group-horizontal"
+                 data-hint="Documentos que el sistema cree que son los más parecidos a lo que estás buscando."
+                 data-position="bottom"
+                 data-intro="Estos son los documentos que el sistema cree que son más parecidos a tu búsqueda. Están ordenados de izquierda a derecha. Cuando quieras decirle al sistema que un documento es relevante o no, debes tomarlo y arrastrarlo a la caja correspondiente."
+                 data-step="2"></div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <h4 class="text-center">Documentos Relevantes</h4>
+            <div id="relevant" class="list-group"
+                 data-hint="Documentos que has declarado como relevantes."
+                 data-position="right"
+                 data-intro="y hasta aquí debes arrastrar los documentos que creas que son relevantes para tu búsqueda."
+                 data-step="3"></div>
+        </div>
+        <div class="col-md-6">
+            <div class="row">
+                <div class="col-md-12">
+                    <form class="form-inline" onsubmit="return false;">
+                        <div class="form-group">
+                            <select class="form-control input-sm"
+                                    id="transform_selector"
+                                    onchange="changeMethod()"
+                                    data-hint="Algoritmos que puedes seleccionar para posicionar los documentos de la visualización"
+                                    data-position="bottom"
+                                    data-intro="Aquí puedes seleccionar una nueva forma para distribuir los documentos en la visualización. Solo cambia en qué lugar se muestran."
+                                    data-step="7">
+                                {% for (id, name) in transformations %}
+                                    <option value={{ id }}>{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <span><img src="static/spiner.gif" id='loading-transform' class="loading"></span>
+                        <button class="btn btn-default btn-sm" id="change-mode" onsubmit="return false;" onclick="changeVizMode()"
+                                data-hint="Cambia de modo Zoom a Selección. También puedes cambiar usando la tecla Shift"
+                                data-intro="Puedes hacer zoom y seleccionar varios documentos. Haz click aquí o presiona 'Shift' para cambiar de modo"
+                                data-position="bottom" data-step="8">
+                            Realizar Selección
+                        </button>
+                        <button class="btn btn-default  btn-sm" id="reset-zoom" onsubmit="return false;" data-hint="Vuelve al nivel de zoom original"
+                        data-intro="Haz click para volver al nivel de zoom original"
+                                data-position="bottom" data-step="9">
+                            ResetZoom
+                        </button>
+
+                    </form>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12" id="vis"
+                     data-hint="Visualización de los documentos, donde cada círculo es una revisión y cada cuadrado es un estudio primario. Mientras más cerca estén dos documentos, más palabras en común tienen."
+                     data-position="right"
+                     data-intro="En esta visualización cada cada círculo es una revisión y cada cuadrado es un estudio primario. Mientras más cerca estén dos documentos, más palabras en común tienen. Al hacer click podrás ver los detalles del documento."
+                     data-step="6">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12" id="articles_info"
+                     data-hint="Detalles del documento seleccionado."
+                     data-position="left"
+                     data-intro="Cada vez que selecciones un documento sus detalles se mostrarán aquí."
+                     data-step="5">
+                    <div id="selected_article_info">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4 id="selected_article_title"></h4>
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <h5>Autores</h5>
+                                        <p id="selected_article_authors"></p>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <h5>Tipo de estudio</h5>
+                                        <p id="selected_article_type"></p>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <h5>Año</h5>
+                                        <p id="selected_article_year"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5 id="selected_article_revisions_intro">Este artículo está incluido en las siguientes revisiones</h5>
+                                <div class="row">
+                                    <div class="col-md-11">
+                                        <ul class='revisions hide-content' id="selected_article_revisions"></ul>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-default btn-xs" aria-label="ShowMore" id='show-more-revisions' onclick="showMoreRevisions(this.id)">
+                                          <span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <hr>
+                                <p id="selected_article_abstract"></p>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="col-md-3">
+            <h4 class="text-center">Documentos No Relevantes</h4>
+
+            <div id="non-relevant" class="list-group"
+                 data-hint="Documentos que has declarado como no relevantes."
+                 data-position="left"
+                 data-intro="Hasta aquí debes arrastrar los documentos que consideres no relevantes."
+                 data-step="4"></div>
+        </div>
+    </div>
+    <div class="row" data-hint="Acciones que has realizado. Para hacer zoom sobre la línea de tiempo, debes presionar 'Ctrl' al mismo tiempo que haces zoom."
+         data-position="top">
+
+        <div class="col-md-12">
+            <button class="btn btn-default"
+                        id="see-timeline" type="button"
+                        onclick="seeTimeLine(this.id)"
+                        data-hint="Al hacer click aquí se desplegará una línea de tiempo en la que aparecerán los documentos que has clasificado."
+                        data-position="top" data-step="10"
+                        data-intro="Al hacer click aquí se mostrará una línea de tiempo en la que aparecerán los documentos que has clasificado. Para hacer zoom en la línea de tiempo debes presionar 'Ctrl' al mismo tiempo que haces zoom."
+                ><span class="glyphicon glyphicon-triangle-top"></span></button>
+            <div id="history-articles" class="list-group-horizontal">
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<div class="modal fade" id="finish-experiment-modal" tabindex="-1" role="dialog"
+     aria-labelledby="exampleModalLabel" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="exampleModalLabel">
+                    Terminar búsqueda  <span><img src="static/spiner.gif" id='loading-finish-experiment-modal' class="loading"></span></h4>
+            </div>
+
+            <div class="modal-body">
+                <div class="carousel slide" data-interval="false" data-keyboard="false">
+                    <div class="carousel-inner" role="listbox">
+                        <div class="item active">
+                            <h4>¿Has encontrado todos los documentos
+                                relevantes?</h4>
+                            <div class="text-center">
+                                <button class="btn navbar-btn btn-primary btn-lg"
+                                        onclick="startSurvey()">Sí :)
+                                </button>
+                                <button class="btn navbar-btn btn-default btn-lg"
+                                        data-dismiss="modal" aria-label="Close">
+                                    No estoy seguro
+                                </button>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <p class="text-center"><span><img src="static/spiner.gif" id='loading-survey'
+                                                              class="loading"></span></p>
+                            <iframe id="survey"></iframe>
+                        </div>
+                        <div class="item">
+                            <h4>¿Deseas continuar con la siguiente búsqueda?</h4>
+                            <div class="text-center">
+                                <button class="btn navbar-btn btn-primary btn-lg"
+                                        onclick="startExperiment()">Sí :)
+                                </button>
+                                <button class="btn navbar-btn btn-default btn-lg"
+                                        onclick="endSession(false, 4,'finish-experiment-modal')">
+                                    No
+                                </button>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <h4>¡Has terminado la experiencia! ¡Muchas
+                                gracias por tu ayuda!</h4>
+                            <p>Te enviaremos un email confirmando que tu
+                                participación ha terminado.</p>
+                            <p>Puedes cerrar el explorador :)</p>
+                        </div>
+                        <div class="item">
+                            <h4>Has terminado la sesión correctamente. Puedes
+                                cerrar el explorador.</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="finish-session-modal" tabindex="-1" role="dialog"
+     aria-labelledby="exampleModalLabel" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="exampleModalLabel">
+                    Cerrar Sesión <span><img src="static/spiner.gif" id='loading-finish-session-modal' class="loading"></span></h4>
+            </div>
+
+            <div class="modal-body">
+                <div class="carousel slide" data-interval="false" data-keyboard="false">
+                    <!-- Indicators -->
+                    <div class="carousel-inner" role="listbox">
+                        <div class="item active">
+                            <h4>¿Deseas guardar los últimos cambios?</h4>
+                            <div class="text-center">
+                                <button class="btn navbar-btn btn-primary btn-lg"
+                                        onclick="endSession(true, 1, 'finish-session-modal')">
+                                    Sí :)
+                                </button>
+                                <button class="btn navbar-btn btn-default btn-lg"
+                                        onclick="endSession(false, 1, 'finish-session-modal')">
+                                    No
+                                </button>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <h4>Has terminado la sesión correctamente. Puedes
+                                cerrar el explorador.</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+
+<script>
+    // VIZ
+    var padding = 5;
+    var color = d3.scale.ordinal()
+            .domain([-1, 0, 1])
+            .range(["#D95F02", "#7570b3", "#1b9e77"]);
+    var scaleX;
+    var scaleY;
+    var scaleFactor = 1;
+    var lastScaleFactor = 1;
+    var translation = [0, 0];
+    var circles;
+    var rects;
+    var brush_on = false;
+    var svg;
+    var sessionOn = true;
+
+
+</script>
+<link href={{ url_for('static', filename="app.css" ) }} rel="stylesheet">
+<script src={{ url_for('static', filename='visualization.js' ) }}></script>
+<script src={{ url_for('static', filename='panels.js' ) }}></script>
+<script src={{ url_for('static', filename='timeline.js' ) }}></script>
+<script src={{ url_for('static', filename='controller.js' ) }}></script>
+<script>
+    var count_actions = 0;
+    var ga_actions = [];
+    (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'analytics');
+    function ga(i, s, o, g, r, a, m) {
+        if (count_actions < 500) {
+            analytics(i, s, o, g, r, a, m)
+        }
+        else {
+            console.log(ga_actions)
+            ga_actions.push([i, s, o, g, r, a, m]);
+            console.log(ga_actions)
+            if (ga_actions.length > 20) {
+                var xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "/analytics/{0}".format(user_id));
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                xhttp.send(JSON.stringify({
+                    user: user_id,
+                    interface_: experimentInterface,
+                    model: model,
+                    document_set_id: document_set_id,
+                    data: ga_actions
+                }));
+                xhttp.onreadystatechange = function () {
+                    if (xhttp.readyState == 4 && xhttp.status == 200) {
+                        console.log('Sent actions')
+                        ga_actions = ga_actions.slice(15)
+                    }
+                }
+            }
+        }
+        count_actions += 1;
+    }
+    // Feature Tour
+    var doing_tour = true;
+    var intro;
+    var showingHints = false;
+    var iframe;
+    // INFO CONTROLLER
+    var metadata = ['year', 'title', 'authors', 'abstract', 'type']
+    var selected_markup_metadata = 'selected_article_'
+    var panels = ['next-articles', "history-articles", "relevant", "non-relevant"]
+    var classification_ids = {
+        "next-articles": 0,
+        "relevant": 1,
+        "non-relevant": -1
+    }
+    var ids2classsification = {
+        0: "unknown",
+        1: "relevant-article",
+        2: "non-relevant-article"
+    };
+    var user_generated = true
+
+    // EXPERIMENT
+    var minutes_passed = {{ minutes_passed | safe }};
+    var seconds_passed = {{ seconds_passed | safe }};
+    var start_time = new Date().getTime();
+    var document_set_title = "{{ document_set_title|safe }}";
+    var document_set_id = "{{ document_set_id | safe }}";
+    var model = "{{ model| safe }}";
+    var experimentInterface = "{{ interface | safe }}";
+    var user_id = "{{ user_id }}";
+    var actions = {{ actions|safe }};
+    var action_id;
+    var totalFeedback;
+    if (actions.length > 0) {
+        action_id = actions.length;
+        totalFeedback = actions.length;
+    } else {
+        action_id = -1;
+        totalFeedback = 0;
+    }
+    document_dragged = null;
+    var minFeedback = 5;
+    var minEnd = 10;
+    var num_loads = 0;
+    var changed_documents = [];
+    var document_set = {{ document_set|safe }};
+    var datum = {};
+    document_set.forEach(function (e) {
+        datum[e.id] = e
+    });
+    var saving = false;
+    // TIMELINE
+    // VIZ
+    svg = d3.select("#vis")
+            .append("svg")
+            .attr("id", "vis-svg")
+    function filter_systematic_(d) {
+        return d.type == 'systematic-review' || d.type == "broad-synthesis"
+                || d.type == "structured-summary-of-systematic-review" || d.type == "overview"
+    }
+    function filter_primary_(d) {
+        return d.type == 'primary-study' || d.type == "structured-summary-of-primary-study" || d.type == "raw"
+    }
+    function filter_pais(d) {
+        return true;//d.type == "País"
+    }
+    function filter_not_pais(d) {
+        return false;//d.type != "País"
+    }
+    var filter_systematic = filter_systematic_
+    var filter_primary = filter_primary_
+    window.onload = function () {
+        panelAddItems("next-articles", document_set);
+        panelAddItems("relevant", document_set);
+        panelAddItems('non-relevant', document_set);
+        loadVisDocs(document_set, "vis", filter_primary, filter_systematic);
+        transformTimeLineData(actions);
+        document.getElementById("next-articles").addEventListener('scroll', onScroll('next-articles'));
+        document.getElementById("non-relevant").addEventListener('scroll', onScroll('non-relevant'));
+        document.getElementById("relevant").addEventListener('scroll', onScroll('relevant'));
+        document.getElementById("history-articles").addEventListener('scroll', onScroll('history'));
+        document.getElementById("selected_article_info").addEventListener('scroll', onScrollDetails);
+        if (experimentInterface == 'noviz') {
+            removeVizForExperiment();
+        }
+         $('[data-toggle="tooltip"]').tooltip()
+
+        updateBadges();
+        enableSearch();
+        changeMethod(); // Zoom
+        if (minutes_passed < 15 || (minutes_passed == 15 && seconds_passed == 0)){
+            enableFinish()
+        }
+        if ("{{ start_survey | safe}}" == 'Starting'){
+            $("#finish-experiment-modal").modal("show")
+            startSurvey()
+        }
+        else{
+            startFeatureTour();
+        }
+
+    };
+    function changeVizMode() {
+        var eventLabel;
+        if (brush_on) {
+            brush_on = false;
+            d3.select(".brush").remove();
+            eventLabel = "Deactivate"
+            document.getElementById("change-mode").innerHTML = "Realizar Selección"
+        }
+        else {
+            brush_on = true;
+            activateABrush()
+            eventLabel = "Activate"
+            document.getElementById("change-mode").innerHTML = "Realizar Zoom"
+        }
+        ga('send', 'event', 'Visualization', 'Brush', eventLabel, {
+            dimension2: new Date().getTime()
+        });
+    }
+    window.onkeydown = function (e) {
+        if (e.key == "Shift" || e.key == "Escape") {
+            var eventLabel;
+            if (brush_on) {
+                brush_on = false;
+                d3.select(".brush").remove();
+                eventLabel = "Deactivate"
+                document.getElementById("change-mode").innerHTML = "Realizar Selección"
+            }
+            else {
+                brush_on = true;
+                activateABrush()
+                eventLabel = "Activate"
+                document.getElementById("change-mode").innerHTML = "Realizar Zoom"
+            }
+            ga('send', 'event', 'Visualization', 'Brush', eventLabel, {
+                dimension2: new Date().getTime()
+            });
+        }
+    };
+    window.addEventListener("beforeunload", function (e) {
+        if (changed_documents.length > 0 && sessionOn) {
+            var btn = confirm('¿Quieres guardar los cambios?');
+            if (btn === true) {
+                endSession(true, 1, "finish-session-modal");
+            }
+            else {
+                endSession(false, 1, "finish-session-modal");
+            }
+            (e || window.event).returnValue = null;
+            return null;
+        }
+        else {
+            endSession(false, 1, "finish-session-modal");
+        }
+    });
+    $("#finish-session-modal").on("show.bs.modal", function(){
+        saving = true;
+    })
+    $("#finish-experiment-modal").on("show.bs.modal", function(){
+        saving = true;
+    })
+    $("#finish-experiment-modal").on("hide.bs.modal", function(){
+        saving = false;
+    })
+    $('#finish-experiment').on('click', function (ev){
+        if (minutes_passed < 15){
+            $('#finish-experiment-modal').modal('show')
+        }
+    })
+
+    //ga('create', '', 'auto');
+    ga('set', 'dimension1', 'ivania');
+    ga('set', 'dimension3', model);
+    ga('set', 'dimension4', document_set_id);
+    ga('set', 'dimension5', experimentInterface);
+    ga('send', 'pageview');
+    ga('send', 'event', 'Experiment', 'StartSession', document_set_title, {
+        dimension2: new Date().getTime()
+    });
+
+</script>
+
+</html>
